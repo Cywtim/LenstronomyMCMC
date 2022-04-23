@@ -4,7 +4,9 @@ Created on Tue Jan 11 11:16:05 2022
 
 @author: CHENG
 """
-
+import sys 
+sys.path.append("..") 
+import lens_model_class
 import lens_model_class
 import numpy as np
 from matplotlib import pyplot as plt

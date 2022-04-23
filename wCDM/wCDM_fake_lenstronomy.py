@@ -5,6 +5,8 @@ Created on Mon Jan 10 23:43:24 2022
 @author: CHENG
 """
 
+import sys 
+sys.path.append("..") 
 import lens_model_class
 from lens_model_class import lens_redshift_difference
 import numpy as np
@@ -62,7 +64,7 @@ for i in range(Nobs):
 #Delta_z_obs = Delta_z_true * ( 1 + ( np.random.normal(0,eps_true,size=Nobs) ) )
 #np.random.random(Nobs)
 
-np.save("wCDM10-8.npy",[zl_true,zs_true,Delta_z_true,Delta_z_obs])
+np.save("..\data\wCDM10-8.npy",[zl_true,zs_true,Delta_z_true,Delta_z_obs])
 
 
 
