@@ -12,6 +12,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import scipy.optimize as opt
 import h5py
+import pygtc
 import emcee
 import corner
 import lens_model_class
@@ -47,15 +48,24 @@ def lnlike(p, zl, zs, Deltaz, z_err):
     global number
     
     
-    Omega_M, Omega_Lambda, w = p
+    Omega_M, Omega_Lambda, w0 = p
     
-    redshift_differences = lens.lens_redshift_difference([0, 0], kwargs_lens, cosmology_model,\
-            zl, zs, [H0_true, Omega_M, Omega_Lambda, w],search_window=80,min_distance=30)
+    model = np.array([])
+    for i in range(len(zl)):
+        
+        lens_kwargs_list = [dict(zip(kwargs_names, lens_kwargs[i]))]
+        
+        temp = lens.lens_redshifts(beta, lens_kwargs_list, cosmology_model,\
+                zl_true[i], zs_true[i], [H0_true, Omega_M, Omega_Lambda, w0])
+        temp = temp.max() - temp.min()
+        
+        model = np.append(model,temp)
+        
     
     # the likelihood is sum of the lot of normal distributions
     
     denom = np.power(z_err,2)
-    lp = - 0.5 * sum( np.power((Deltaz - redshift_differences),2)/denom + np.log(denom))
+    lp = - 0.5 * sum( np.power((Deltaz - model),2)/denom + np.log(denom))
     
     #number = number + 1
     #if number%100 == 0:
@@ -83,11 +93,14 @@ def lnprob(p, zl_true, zs_true, Delta_z_obs, z_err):
 
 
 
-zl_true,zs_true,Delta_z_true,Delta_z_obs = np.load("wCDM10-8.npy")
+zl_true,zs_true,Delta_z_true,Delta_z_obs = np.load("..\data\wCDM10-8.npy")
+lens_kwargs = np.load("../data/wCDM10-8_lens_parameters.npy")
+kwargs_names = np.array(['theta_E', 'e1', 'e2', 's_scale', 'center_x', 'center_y'])
 z_err = 1e-8
 Omega_M_true = 0.3
 Omega_Lambda_true = 0.7
 H0_true = 72
+beta = [0, 0]
 
 #nll = lambda *args: -lnlike(*args)
 #result = opt.minimize(nll, [Omega_M_true, Omega_Lambda_true, H0_true, eps_true],
@@ -101,7 +114,7 @@ p0 = np.array([ p0*( 1 + 1.e-9*np.random.randn(ndim))\
                for i in range(nwalkers)]).reshape(nwalkers,ndim)
 
 
-filename = 'wCDM.h5'
+filename = 'wCDM10.h5'
 backend = emcee.backends.HDFBackend(filename)
 backend.reset(nwalkers, ndim)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob,\
@@ -121,9 +134,11 @@ lens_nie = 'NIE'
 lens_model_list = [lens_nie]
 
 #def parameter values of lens models
+'''
 kwargs_nie = {'theta_E':40, 'e1':0.5, 'e2':-0.5,\
               's_scale':0.1, 'center_x':0.1, 'center_y':0.1}
 kwargs_lens = [kwargs_nie]
+'''
 cosmology_model = 'wCDM'
 
 lens = lens_redshift_difference(lens_model_list)
@@ -161,7 +176,7 @@ result = sampler.flatchain[np.where(np.sum(sampler.flatchain,axis=1)<1)\
                            or np.where(sampler.flatchain.any>1)\
                                or np.where(sampler.flatchain.any<0)]
 pygtc.plotGTC(chains=[result[2000:]],chainLabels=["wCDM"]\
-              ,paramNames=["$\Omega_M$","$\Omega_\Lambda$","\omega_0"],\
+              ,paramNames=["$\Omega_M$","$\Omega_\Lambda$","$\omega_0$"],\
                   truths=(0.3,0.7,-1),truthLabels='Standard',\
                       nContourLevels=3,figureSize='APJ_page')
     
