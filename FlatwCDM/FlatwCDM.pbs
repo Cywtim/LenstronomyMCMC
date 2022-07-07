@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#PBS -N FlatLCDM
+#PBS -P Redshift_Difference
+#PBS -l select=2:ncpus=16:mem=16GB
+#PBS -l walltime=20:00:00
+#PBS -q defaultQ
+#PBS -M cwan2873@uni.sydney.edu.au
+
+cd "$PBS_O_WORKDIR"
+
+module load python/3.8.2
+source /project/Redshift_Difference/astro/bin/activate
+
+python FlatLCDM_MC_lenstronomy_Artemis_.py

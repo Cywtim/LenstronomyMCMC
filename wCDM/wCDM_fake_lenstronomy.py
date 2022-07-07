@@ -13,8 +13,8 @@ import numpy as np
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
-eps_true = 0.2
-Nobs = 10
+eps_true = 1
+Nobs = 500
 beta = [0,0]
 err = 1e-8
 
@@ -31,14 +31,15 @@ lens = lens_redshift_difference(lens_model_list)
 
 #generate several lens parameters
 kwargs = np.array(["theta_e","e1","e2","s_scale","center_x","center_y"])
-theta_E = np.random.randn(Nobs) * 5  + 40
-e1 = np.random.randn(Nobs)*0.1 + 0.5
-e2 = -np.random.randn(Nobs)*0.1 - 0.5
+theta_E = np.random.randn(Nobs) * 10  + 100
+sigma_v = np.random.randn(Nobs) * 150  + 1500
+e1 = np.random.randn(Nobs)*0.01 + 0.1
+e2 = -np.random.randn(Nobs)*0.01 - 0.1
 s_scale = np.random.randn(Nobs)*0.1 + 1
-center_x = np.random.randn(Nobs)
-center_y = np.random.randn(Nobs)
-kwargs_names = np.array(['theta_E', 'e1', 'e2', 's_scale', 'center_x', 'center_y'])
-lens_kwargs = np.array([theta_E, e1, e2, s_scale, center_x, center_y]).T
+center_x = np.random.randn(Nobs)*0.1
+center_y = np.random.randn(Nobs)*0.1
+kwargs_names = np.array(['sigma_v', 'e1', 'e2', 's_scale', 'center_x', 'center_y'])
+lens_kwargs = np.array([sigma_v, e1, e2, s_scale, center_x, center_y]).T
 
 
 
@@ -49,8 +50,8 @@ kwargs_nie = {'theta_E':40, 'e1':0.5, 'e2':-0.5,\
 kwargs_lens = [kwargs_nie]
 '''
 
-zl_true = np.random.uniform(1, 4, size=Nobs)
-zs_true = zl_true + np.random.uniform(2.5 , 3.5, size=Nobs)
+zl_true = np.random.uniform(1, 2, size=Nobs)
+zs_true = zl_true + np.random.uniform(2 , 4, size=Nobs)
 Omega_M_true = 0.3
 Omega_Lambda_true = 0.7
 w0_true = -1
@@ -60,20 +61,23 @@ Delta_z_true = []
 Delta_z_obs = []
 
 cosmology_model = 'wCDM'
-
+t = []
 for i in range(Nobs):
     
     lens_kwargs_list = [dict(zip(kwargs_names, lens_kwargs[i]))]
     
-    temp = lens.lens_redshifts(beta, lens_kwargs_list, cosmology_model,\
-            zl_true[i], zs_true[i], [H0_true, Omega_M_true, Omega_Lambda_true, w0_true])
+    temp = lens.NIE_redshifts(beta, lens_kwargs_list, cosmology_model,\
+            zl_true[i], zs_true[i], [H0_true, Omega_M_true, Omega_Lambda_true, w0_true],\
+                search_window=100,min_distance=3,solver='lenstronomy')
+    
+    #print(len(temp))
     temp = temp.max() - temp.min()
     temp2 = temp  + err * np.random.normal(0, eps_true)
     
     Delta_z_true.append(temp)
     Delta_z_obs.append(temp2)
-    
-    print(i,",",temp,",",temp2)
+    t.append(np.abs(temp/temp2-1))
+    print(i,",", np.abs(temp/temp2-1))
 
 #Delta_z_obs = Delta_z_true * ( 1 + ( np.random.normal(0,eps_true,size=Nobs) ) )
 #np.random.random(Nobs)

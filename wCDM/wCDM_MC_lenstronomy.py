@@ -27,16 +27,16 @@ def lnprior(p):
     # The parameters are stored as a vector of values, so unpack them
     # If the parameters are out of expected range, set the value -inf
     # If not return 0 and calculate likehood
-    Omega_M, Omega_Lambda, w  = p
+    Omega_M, Omega_Lambda, w0, H0  = p
     # We're using only uniform priors, and only eps has a lower bound
     if Omega_M < 0.0  or Omega_M > 1.0 :
         return - np.inf
     elif Omega_Lambda < 0.0 or Omega_Lambda > 1.0:
         return - np.inf
-    elif w < -2.0 or w > 0.0:
+    elif w0 < -2.0 or w0 > 0.0:
        return - np.inf
-    #elif H0 < 50 or H0 > 90:
-    #    return - np.inf
+    elif H0 < 50 or H0 > 90:
+       return - np.inf
 
        
     return 0
@@ -48,15 +48,18 @@ def lnlike(p, zl, zs, Deltaz, z_err):
     global number
     
     
-    Omega_M, Omega_Lambda, w0 = p
+    Omega_M, Omega_Lambda, w0, H0 = p
     
     model = np.array([])
     for i in range(len(zl)):
         
         lens_kwargs_list = [dict(zip(kwargs_names, lens_kwargs[i]))]
         
-        temp = lens.lens_redshifts(beta, lens_kwargs_list, cosmology_model,\
-                zl_true[i], zs_true[i], [H0_true, Omega_M, Omega_Lambda, w0])
+        temp = lens.NIE_redshifts(beta, lens_kwargs_list, cosmology_model,\
+                zl_true[i], zs_true[i], [H0, Omega_M, Omega_Lambda, w0],\
+                    search_window=100,min_distance=3,solver="lenstronomy")
+            
+        
         temp = temp.max() - temp.min()
         
         model = np.append(model,temp)
@@ -67,9 +70,9 @@ def lnlike(p, zl, zs, Deltaz, z_err):
     denom = np.power(z_err,2)
     lp = - 0.5 * sum( np.power((Deltaz - model),2)/denom + np.log(denom))
     
-    #number = number + 1
-    #if number%100 == 0:
-    #    print("i:likehood",number,",",p,",lp=",lp)
+    number = number + 1
+    if number%100 == 0:
+        print("i:likehood",number,",",p,",lp=",lp)
     
     return lp
 
@@ -83,9 +86,9 @@ def lnprob(p, zl_true, zs_true, Delta_z_obs, z_err):
     
     if not np.isfinite(lp):
         
-        #number = number + 1 
-        #if number% 100 == 0:
-        #    print("i:prior",number,",",p,",lp=-inf")    
+        number = number + 1 
+        if number% 100 == 0:
+            print("i:prior",number,",",p,",lp=-inf")    
         return - np.inf
     
     return lp + lnlike(p, zl_true, zs_true, Delta_z_obs, z_err) # If not compute likehood
@@ -93,23 +96,24 @@ def lnprob(p, zl_true, zs_true, Delta_z_obs, z_err):
 
 
 
-zl_true,zs_true,Delta_z_true,Delta_z_obs = np.load("..\data\wCDM10-8.npy")
+zl_true,zs_true,Delta_z_true,Delta_z_obs = np.load("../data/wCDM10-8.npy")
 lens_kwargs = np.load("../data/wCDM10-8_lens_parameters.npy")
-kwargs_names = np.array(['theta_E', 'e1', 'e2', 's_scale', 'center_x', 'center_y'])
+kwargs_names = np.array(['sigma_v', 'e1', 'e2', 's_scale', 'center_x', 'center_y'])
 z_err = 1e-8
 Omega_M_true = 0.3
 Omega_Lambda_true = 0.7
 H0_true = 72
+w0_true = -1
 beta = [0, 0]
 
 #nll = lambda *args: -lnlike(*args)
 #result = opt.minimize(nll, [Omega_M_true, Omega_Lambda_true, H0_true, eps_true],
 #                      args=(zl_true,zs_true,Delta_z_obs))
 
-nwalkers, ndim = 10, 3
+nwalkers, ndim = 10, 4
 
 # create a nearby proir 
-p0 = np.array([[0.3, 0.7, -1 ]])
+p0 = np.array([[Omega_M_true, Omega_Lambda_true, w0_true, H0_true ]])
 p0 = np.array([ p0*( 1 + 1.e-9*np.random.randn(ndim))\
                for i in range(nwalkers)]).reshape(nwalkers,ndim)
 
