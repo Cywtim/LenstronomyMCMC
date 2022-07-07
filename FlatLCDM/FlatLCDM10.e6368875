@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/usr/local/python/3.8.2/lib/python3.8/site-packages/emcee/ensemble.py", line 545, in __call__
+    return self.f(x, *self.args, **self.kwargs)
+  File "FlatLCDM_MC_lenstronomy_Artemis_10.py", line 83, in lnprob
+    return lp + lnlike(p, zl_true, zs_true, Delta_z_obs, z_err) # If not compute likehood
+  File "FlatLCDM_MC_lenstronomy_Artemis_10.py", line 43, in lnlike
+    Omega_M, H0 = p
+ValueError: too many values to unpack (expected 2)
+Traceback (most recent call last):
+  File "FlatLCDM_MC_lenstronomy_Artemis_10.py", line 135, in <module>
+    for sample in sampler.sample(p0, iterations=steps, progress=True, tune=True):
+  File "/usr/local/python/3.8.2/lib/python3.8/site-packages/emcee/ensemble.py", line 285, in sample
+    state.log_prob, state.blobs = self.compute_log_prob(state.coords)
+  File "/usr/local/python/3.8.2/lib/python3.8/site-packages/emcee/ensemble.py", line 426, in compute_log_prob
+    results = list(
+  File "/usr/local/python/3.8.2/lib/python3.8/site-packages/emcee/ensemble.py", line 545, in __call__
+    return self.f(x, *self.args, **self.kwargs)
+  File "FlatLCDM_MC_lenstronomy_Artemis_10.py", line 83, in lnprob
+    return lp + lnlike(p, zl_true, zs_true, Delta_z_obs, z_err) # If not compute likehood
+  File "FlatLCDM_MC_lenstronomy_Artemis_10.py", line 43, in lnlike
+    Omega_M, H0 = p
+ValueError: too many values to unpack (expected 2)
